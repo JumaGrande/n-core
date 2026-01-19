@@ -27,7 +27,7 @@ export const auth = betterAuth({
     cookiePrefix: APP_COOKIE_NAME, // Change this to your cookie prefix
     crossSubDomainCookies: {
       enabled: !isProd,
-      domain: '.shipfree.app', // Change this to your domain, if you are using a custom domain
+      domain: 'localhost', // Change this to your domain, if you are using a custom domain
     },
     useSecureCookies: !isProd,
   },
@@ -133,6 +133,9 @@ export const auth = betterAuth({
         otp: string
         type: 'sign-in' | 'email-verification' | 'forget-password'
       }) => {
+        // Always log OTP in development
+        console.log('🔑 OTP CODE:', data.otp, '| Email:', data.email, '| Type:', data.type)
+
         try {
           if (!data.email) {
             throw new Error('Email is required')
