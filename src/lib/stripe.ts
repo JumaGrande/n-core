@@ -2,7 +2,12 @@ import Stripe from 'stripe';
 import { db } from '@/db';
 import { userSubscriptions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { PLANS, getPlanByStripePriceId, type PlanId } from '@/config/plans';
+import {
+  BILLING_PLANS,
+  getPlanByStripePriceId,
+  type PlanId,
+  type TBILLING_PLAN,
+} from '@/components/sections/pricing/data';
 
 // =============================================================================
 // STRIPE CLIENT
@@ -278,10 +283,11 @@ export async function isInTrial(userId: string): Promise<boolean> {
 /**
  * Obtiene el plan actual del usuario
  */
-export async function getCurrentPlan(userId: string) {
+export async function getCurrentPlan(userId: string): Promise<TBILLING_PLAN> {
   const subscription = await getUserSubscription(userId);
   const planId = (subscription?.planId as PlanId) || 'free';
-  return PLANS[planId];
+  const plan = BILLING_PLANS.find((p) => p.id === planId);
+  return plan || BILLING_PLANS[0]; // fallback to free
 }
 
 /**

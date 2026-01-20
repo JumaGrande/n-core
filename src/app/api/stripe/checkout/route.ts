@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { createCheckoutSession, stripe, updateSubscription } from '@/lib/stripe';
-import { getPlanByStripePriceId, type PlanId } from '@/config/plans';
+import { getPlanByStripePriceId, type PlanId } from '@/components/sections/pricing/data';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 

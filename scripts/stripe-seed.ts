@@ -126,12 +126,12 @@ async function updateEnvFile(priceIds: PriceIds) {
   const envPath = path.join(process.cwd(), '.env');
   let envContent = await fs.readFile(envPath, 'utf-8');
 
-  // Reemplazar los Price IDs
+  // Reemplazar los Price IDs (solo NEXT_PUBLIC_* son usados activamente)
   const replacements: [RegExp, string][] = [
-    [/STRIPE_PLUS_MONTHLY_PRICE_ID=.*/g, `STRIPE_PLUS_MONTHLY_PRICE_ID=${priceIds.plusMonthly}`],
-    [/STRIPE_PLUS_YEARLY_PRICE_ID=.*/g, `STRIPE_PLUS_YEARLY_PRICE_ID=${priceIds.plusYearly}`],
-    [/STRIPE_PRO_MONTHLY_PRICE_ID=.*/g, `STRIPE_PRO_MONTHLY_PRICE_ID=${priceIds.proMonthly}`],
-    [/STRIPE_PRO_YEARLY_PRICE_ID=.*/g, `STRIPE_PRO_YEARLY_PRICE_ID=${priceIds.proYearly}`],
+    [/UNUSED_STRIPE_PLUS_MONTHLY_PRICE_ID=.*/g, `UNUSED_STRIPE_PLUS_MONTHLY_PRICE_ID=${priceIds.plusMonthly}`],
+    [/UNUSED_STRIPE_PLUS_YEARLY_PRICE_ID=.*/g, `UNUSED_STRIPE_PLUS_YEARLY_PRICE_ID=${priceIds.plusYearly}`],
+    [/UNUSED_STRIPE_PRO_MONTHLY_PRICE_ID=.*/g, `UNUSED_STRIPE_PRO_MONTHLY_PRICE_ID=${priceIds.proMonthly}`],
+    [/UNUSED_STRIPE_PRO_YEARLY_PRICE_ID=.*/g, `UNUSED_STRIPE_PRO_YEARLY_PRICE_ID=${priceIds.proYearly}`],
     [/NEXT_PUBLIC_STRIPE_PLUS_MONTHLY_PRICE_ID=.*/g, `NEXT_PUBLIC_STRIPE_PLUS_MONTHLY_PRICE_ID=${priceIds.plusMonthly}`],
     [/NEXT_PUBLIC_STRIPE_PLUS_YEARLY_PRICE_ID=.*/g, `NEXT_PUBLIC_STRIPE_PLUS_YEARLY_PRICE_ID=${priceIds.plusYearly}`],
     [/NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID=.*/g, `NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID=${priceIds.proMonthly}`],
@@ -144,11 +144,11 @@ async function updateEnvFile(priceIds: PriceIds) {
 
   await fs.writeFile(envPath, envContent);
 
-  console.log('  ✓ STRIPE_PLUS_MONTHLY_PRICE_ID updated');
-  console.log('  ✓ STRIPE_PLUS_YEARLY_PRICE_ID updated');
-  console.log('  ✓ STRIPE_PRO_MONTHLY_PRICE_ID updated');
-  console.log('  ✓ STRIPE_PRO_YEARLY_PRICE_ID updated');
-  console.log('  ✓ NEXT_PUBLIC_* variables updated\n');
+  console.log('  ✓ NEXT_PUBLIC_STRIPE_PLUS_MONTHLY_PRICE_ID updated');
+  console.log('  ✓ NEXT_PUBLIC_STRIPE_PLUS_YEARLY_PRICE_ID updated');
+  console.log('  ✓ NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID updated');
+  console.log('  ✓ NEXT_PUBLIC_STRIPE_PRO_YEARLY_PRICE_ID updated');
+  console.log('  ✓ UNUSED_* variables updated (for reference)\n');
 }
 
 async function main() {

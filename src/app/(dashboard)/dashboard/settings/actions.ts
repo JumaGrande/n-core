@@ -199,7 +199,7 @@ export async function getSubscriptionStatus() {
 
   try {
     const { getUserSubscription } = await import('@/lib/stripe');
-    const { PLANS } = await import('@/config/plans');
+    const { BILLING_PLANS } = await import('@/components/sections/pricing/data');
 
     const subscription = await getUserSubscription(session.user.id);
 
@@ -214,7 +214,7 @@ export async function getSubscriptionStatus() {
       };
     }
 
-    const plan = PLANS[subscription.planId as keyof typeof PLANS] || PLANS.free;
+    const plan = BILLING_PLANS.find((p) => p.id === subscription.planId) || BILLING_PLANS[0];
 
     return {
       planId: subscription.planId,

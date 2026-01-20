@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { stripe, updateSubscription, getSubscriptionByCustomerId } from '@/lib/stripe';
-import { getPlanByStripePriceId, type PlanId } from '@/config/plans';
+import { getPlanByStripePriceId, type PlanId } from '@/components/sections/pricing/data';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 

@@ -30,7 +30,10 @@ const AMOUNTS = {
   },
 };
 
+// Plan types - PlanId is for Stripe-enabled plans only
 export type PlanType = 'free' | 'plus' | 'pro' | 'enterprise';
+export type PlanId = 'free' | 'plus' | 'pro'; // Excludes enterprise (no Stripe)
+export type PlanInterval = 'monthly' | 'yearly';
 export type TBILLING_PLAN = (typeof BILLING_PLANS)[number];
 
 export const BILLING_PLANS = [
@@ -58,6 +61,10 @@ export const BILLING_PLANS = [
       'No API key support',
       'Community support only',
     ],
+    limits: {
+      tokens: 25000,
+      projects: 3,
+    },
     cta: 'Try it for free',
     popular: false,
     trialDays: null,
@@ -87,6 +94,10 @@ export const BILLING_PLANS = [
       'Basic analytics dashboard',
       'Email support',
     ],
+    limits: {
+      tokens: 250000,
+      projects: -1, // unlimited
+    },
     cta: 'Start 14-day trial',
     popular: true,
     trialDays: 14,
@@ -116,6 +127,10 @@ export const BILLING_PLANS = [
       'Team collaboration tools',
       'Exportable usage reports',
     ],
+    limits: {
+      tokens: 1000000,
+      projects: -1, // unlimited
+    },
     cta: 'Start 7-day trial',
     popular: false,
     trialDays: 7,
@@ -144,8 +159,66 @@ export const BILLING_PLANS = [
       'SLA-backed support (24/7)',
       'SSO & audit logging',
     ],
+    limits: {
+      tokens: -1, // unlimited
+      projects: -1, // unlimited
+    },
     cta: 'Contact sales',
     popular: false,
     trialDays: null,
   },
 ];
+
+// =============================================================================
+// HELPER FUNCTIONS (used by Stripe integration)
+// =============================================================================
+
+/**
+ * Get a plan by its ID
+ */
+export function getPlan(planId: PlanId): TBILLING_PLAN {
+  const plan = BILLING_PLANS.find((p) => p.id === planId);
+  if (!plan) {
+    return BILLING_PLANS[0]; // Return free plan as fallback
+  }
+  return plan;
+}
+
+/**
+ * Get a plan by its Stripe Price ID
+ */
+export function getPlanByStripePriceId(stripePriceId: string): TBILLING_PLAN | null {
+  for (const plan of BILLING_PLANS) {
+    if (
+      plan.pricing.monthly.stripeId === stripePriceId ||
+      plan.pricing.yearly.stripeId === stripePriceId
+    ) {
+      return plan;
+    }
+  }
+  return null;
+}
+
+/**
+ * Check if a plan has a trial period
+ */
+export function planHasTrial(planId: PlanId): boolean {
+  const plan = getPlan(planId);
+  return plan.trialDays !== null && plan.trialDays > 0;
+}
+
+/**
+ * Get all plans as array
+ */
+export function getAllPlans(): TBILLING_PLAN[] {
+  return BILLING_PLANS;
+}
+
+/**
+ * Get only paid plans (with Stripe integration)
+ */
+export function getPaidPlans(): TBILLING_PLAN[] {
+  return BILLING_PLANS.filter(
+    (plan) => plan.pricing.monthly.stripeId !== null
+  );
+}

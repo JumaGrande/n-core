@@ -317,16 +317,18 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxx
 # -----------------------------------------------------------------------------
 # STRIPE PRICE IDS (generados por stripe-seed.ts o manualmente en Dashboard)
 # -----------------------------------------------------------------------------
+# NOTA: Solo se usan las variables NEXT_PUBLIC_* ya que pricing/data.ts
+# se comparte entre cliente y servidor.
 
-# Plus Plan
-STRIPE_PLUS_MONTHLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx
-STRIPE_PLUS_YEARLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx
+# Plus Plan (NEXT_PUBLIC_* son las activas)
+UNUSED_STRIPE_PLUS_MONTHLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx  # Backup/referencia
+UNUSED_STRIPE_PLUS_YEARLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx   # Backup/referencia
 NEXT_PUBLIC_STRIPE_PLUS_MONTHLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx
 NEXT_PUBLIC_STRIPE_PLUS_YEARLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx
 
-# Pro Plan
-STRIPE_PRO_MONTHLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx
-STRIPE_PRO_YEARLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx
+# Pro Plan (NEXT_PUBLIC_* son las activas)
+UNUSED_STRIPE_PRO_MONTHLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx   # Backup/referencia
+UNUSED_STRIPE_PRO_YEARLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx    # Backup/referencia
 NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx
 NEXT_PUBLIC_STRIPE_PRO_YEARLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxx
 ```
@@ -373,7 +375,7 @@ CREATE TABLE "user_subscriptions" (
 
 | Archivo | Tipo | Descripción |
 |---------|------|-------------|
-| `src/config/plans.ts` | Nuevo | Definición maestra de planes |
+| `src/components/sections/pricing/data.ts` | Modificado | Definición maestra de planes (UI + Stripe) |
 | `src/lib/stripe.ts` | Nuevo | Cliente Stripe y funciones de gestión |
 | `src/app/api/stripe/checkout/route.ts` | Nuevo | Crear y procesar checkout |
 | `src/app/api/stripe/portal/route.ts` | Nuevo | Abrir Customer Portal |
@@ -388,25 +390,29 @@ CREATE TABLE "user_subscriptions" (
 
 ### Detalle de cada archivo
 
-#### `src/config/plans.ts`
+#### `src/components/sections/pricing/data.ts`
 
-**Función**: Fichero maestro que define todos los planes de suscripción.
+**Función**: Fichero único que define todos los planes de suscripción. Usado tanto por la UI de pricing como por la integración de Stripe.
 
 **Types exportados**:
 ```typescript
-type PlanId = 'free' | 'plus' | 'pro';
+type PlanType = 'free' | 'plus' | 'pro' | 'enterprise';
+type PlanId = 'free' | 'plus' | 'pro'; // Solo planes con Stripe
 type PlanInterval = 'monthly' | 'yearly';
 
-interface Plan {
-  id: PlanId;
+interface TBILLING_PLAN {
+  id: PlanType;
   name: string;
   description: string;
-  price: { monthly: number; yearly: number } | null;
+  pricing: {
+    monthly: { amount: number; formattedPrice: string; stripeId: string | null };
+    yearly: { amount: number; formattedPrice: string; stripeId: string | null };
+  };
   features: string[];
-  limits: { generations: number }; // -1 = ilimitado
-  stripePriceId: { monthly: string; yearly: string } | null;
+  limits: { tokens: number; projects: number }; // -1 = ilimitado
+  cta: string;
+  popular: boolean;
   trialDays: number | null;
-  isPopular?: boolean;
 }
 ```
 
@@ -417,14 +423,17 @@ interface Plan {
 | `getPlanByStripePriceId(priceId)` | Obtiene plan por Stripe Price ID |
 | `planHasTrial(planId)` | Verifica si el plan tiene trial |
 | `getAllPlans()` | Devuelve todos los planes como array |
-| `getPaidPlans()` | Devuelve solo los planes de pago |
+| `getPaidPlans()` | Devuelve solo los planes de pago (con Stripe) |
 
 **Planes definidos**:
-| Plan | Precio/mes | Trial | Generaciones |
-|------|------------|-------|--------------|
-| Free | $0 | - | 5/mes |
-| Plus | $15 ($12 anual) | 14 días | 100/mes |
-| Pro | $40 ($32 anual) | 7 días | Ilimitadas |
+| Plan | Precio/mes | Trial | Tokens/mes | Proyectos |
+|------|------------|-------|------------|-----------|
+| Free | $0 | - | 25,000 | 3 |
+| Plus | $15 ($12 anual) | 14 días | 250,000 | Ilimitados |
+| Pro | $40 ($32 anual) | 7 días | 1,000,000 | Ilimitados |
+| Enterprise | Contacto | - | Ilimitados | Ilimitados |
+
+> **Nota**: Enterprise no tiene integración con Stripe (requiere contacto de ventas).
 
 ---
 
