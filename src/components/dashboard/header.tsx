@@ -141,6 +141,7 @@ export default function DashboardHeader({ onMenuClick }: HeaderProps) {
                   {session?.user?.email || ''}
                 </p>
               </div>
+              {/*
               <a
                 href="/dashboard/settings"
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
@@ -161,6 +162,7 @@ export default function DashboardHeader({ onMenuClick }: HeaderProps) {
                 Settings
               </a>
               <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+              */}
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
