@@ -10,7 +10,8 @@
  */
 'use client';
 
-import { useActionState, useEffect, useRef } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { InputGroup, PasswordInput } from '@/components/ui/inputs';
 import {
@@ -121,40 +122,114 @@ export function AccountInformationForm({ user }: AccountInformationFormProps) {
 // Subscription Section
 // ============================================
 
-export function SubscriptionSection() {
-  // TODO: Fetch actual subscription data
-  const planName = 'Free';
-  const subscriptionStatus: 'active' | 'trialing' | 'inactive' = 'inactive';
+interface SubscriptionSectionProps {
+  subscription?: {
+    planId: string;
+    planName: string;
+    status: string;
+    trialEndsAt: Date | null;
+    currentPeriodEnd: Date | null;
+    cancelAtPeriodEnd: boolean | null;
+  } | null;
+}
+
+export function SubscriptionSection({ subscription }: SubscriptionSectionProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const planName = subscription?.planName || 'Free';
+  const status = subscription?.status || 'inactive';
 
   const handleManageSubscription = async () => {
-    const result = await customerPortalAction();
-    if (result.url) {
-      window.location.href = result.url;
-    } else if (result.error) {
-      alert(result.error);
+    setIsLoading(true);
+    try {
+      const result = await customerPortalAction();
+      if (result.url) {
+        window.location.href = result.url;
+      } else if (result.redirectTo) {
+        router.push(result.redirectTo);
+      } else if (result.error) {
+        alert(result.error);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const getStatusText = () => {
+    // Si está programada la cancelación, mostrar como cancelada
+    if (subscription?.cancelAtPeriodEnd) {
+      return `Canceled - Access until ${formatDate(subscription.currentPeriodEnd)}`;
+    }
+    if (status === 'active') {
+      return `Renews on ${formatDate(subscription?.currentPeriodEnd)}`;
+    }
+    if (status === 'trialing') {
+      return `Trial ends on ${formatDate(subscription?.trialEndsAt)}`;
+    }
+    if (status === 'past_due') {
+      return 'Payment failed - please update your payment method';
+    }
+    if (status === 'canceled') {
+      return 'Subscription canceled';
+    }
+    return 'No active subscription';
+  };
+
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const showManageButton = status === 'active' || status === 'trialing' || status === 'past_due';
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="font-medium text-gray-900 dark:text-white">
           Current Plan: <span className="text-primary-500">{planName}</span>
+          {status === 'trialing' && (
+            <span className="ml-2 inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500">
+              Trial
+            </span>
+          )}
+          {status === 'past_due' && (
+            <span className="ml-2 inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-500">
+              Payment Due
+            </span>
+          )}
+          {subscription?.cancelAtPeriodEnd && (
+            <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+              Canceled
+            </span>
+          )}
         </p>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {subscriptionStatus === 'active'
-            ? 'Billed monthly'
-            : subscriptionStatus === 'trialing'
-            ? 'Trial period'
-            : 'No active subscription'}
+          {getStatusText()}
         </p>
       </div>
-      <button
-        onClick={handleManageSubscription}
-        className="inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-      >
-        Manage Subscription
-      </button>
+      <div className="flex gap-2">
+        {showManageButton ? (
+          <button
+            onClick={handleManageSubscription}
+            disabled={isLoading}
+            className="inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            {isLoading ? 'Loading...' : 'Manage Subscription'}
+          </button>
+        ) : (
+          <button
+            onClick={() => router.push('/pricing')}
+            className="inline-flex items-center justify-center rounded-full bg-primary-500 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-600"
+          >
+            Upgrade Plan
+          </button>
+        )}
+      </div>
     </div>
   );
 }

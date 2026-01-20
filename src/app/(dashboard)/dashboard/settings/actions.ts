@@ -153,24 +153,79 @@ export async function deleteAccount(
 // Stripe Customer Portal
 // ============================================
 
-export async function customerPortalAction(): Promise<{ url?: string; error?: string }> {
+export async function customerPortalAction(): Promise<{ url?: string; error?: string; redirectTo?: string }> {
   const session = await auth();
 
-  if (!session?.user) {
+  if (!session?.user?.id) {
     return { error: 'Not authenticated' };
   }
 
   try {
-    // TODO: Create Stripe customer portal session
-    // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-    // const portalSession = await stripe.billingPortal.sessions.create({
-    //   customer: user.stripeCustomerId,
-    //   return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings`,
-    // });
-    // redirect(portalSession.url);
+    const { createCustomerPortalSession, getUserSubscription } = await import('@/lib/stripe');
 
-    return { error: 'Stripe integration not configured yet' };
+    // Verificar si el usuario tiene suscripción
+    const subscription = await getUserSubscription(session.user.id);
+
+    if (!subscription?.stripeCustomerId) {
+      return { error: 'No active subscription found', redirectTo: '/pricing' };
+    }
+
+    const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const portalSession = await createCustomerPortalSession(
+      session.user.id,
+      `${APP_URL}/dashboard/settings`
+    );
+
+    return { url: portalSession.url };
   } catch (error) {
+    console.error('Customer portal error:', error);
+    if (error instanceof Error && error.message.includes('No Stripe customer')) {
+      return { error: 'No active subscription found', redirectTo: '/pricing' };
+    }
     return { error: 'Failed to open customer portal' };
+  }
+}
+
+// ============================================
+// Get User Subscription Status
+// ============================================
+
+export async function getSubscriptionStatus() {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  try {
+    const { getUserSubscription } = await import('@/lib/stripe');
+    const { PLANS } = await import('@/config/plans');
+
+    const subscription = await getUserSubscription(session.user.id);
+
+    if (!subscription) {
+      return {
+        planId: 'free',
+        planName: 'Free',
+        status: 'inactive',
+        trialEndsAt: null,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+      };
+    }
+
+    const plan = PLANS[subscription.planId as keyof typeof PLANS] || PLANS.free;
+
+    return {
+      planId: subscription.planId,
+      planName: plan.name,
+      status: subscription.status,
+      trialEndsAt: subscription.trialEndsAt,
+      currentPeriodEnd: subscription.currentPeriodEnd,
+      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+    };
+  } catch (error) {
+    console.error('Error getting subscription status:', error);
+    return null;
   }
 }

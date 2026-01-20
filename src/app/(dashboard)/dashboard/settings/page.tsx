@@ -17,6 +17,7 @@ import {
   PasswordForm,
   DeleteAccountForm,
 } from './settings-forms';
+import { getSubscriptionStatus } from './actions';
 
 export const metadata = {
   title: 'Settings',
@@ -29,6 +30,9 @@ export default async function SettingsPage() {
   if (!session) {
     redirect('/signin');
   }
+
+  // Obtener el estado de la suscripción
+  const subscription = await getSubscriptionStatus();
 
   return (
     <div className="space-y-6">
@@ -55,7 +59,7 @@ export default async function SettingsPage() {
         title="Subscription"
         description="Manage your subscription and billing."
       >
-        <SubscriptionSection />
+        <SubscriptionSection subscription={subscription} />
       </SettingsCard>
 
       {/* Password */}

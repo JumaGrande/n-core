@@ -30,9 +30,12 @@ const AMOUNTS = {
   },
 };
 
+export type PlanType = 'free' | 'plus' | 'pro' | 'enterprise';
 export type TBILLING_PLAN = (typeof BILLING_PLANS)[number];
+
 export const BILLING_PLANS = [
   {
+    id: 'free' as PlanType,
     name: 'Free',
     description:
       'For hobbyists exploring AI—get started with essential features and a small token allowance.',
@@ -57,8 +60,10 @@ export const BILLING_PLANS = [
     ],
     cta: 'Try it for free',
     popular: false,
+    trialDays: null,
   },
   {
+    id: 'plus' as PlanType,
     name: 'Plus plan',
     description:
       'For developers building real products—higher limits and more flexible usage.',
@@ -66,12 +71,12 @@ export const BILLING_PLANS = [
       monthly: {
         amount: AMOUNTS['plus']['monthly'],
         formattedPrice: '$' + AMOUNTS['plus']['monthly'],
-        stripeId: process.env.NEXT_PUBLIC_PLUS_MONTHLY_PRICE_ID!,
+        stripeId: process.env.NEXT_PUBLIC_STRIPE_PLUS_MONTHLY_PRICE_ID || null,
       },
       yearly: {
         amount: AMOUNTS['plus']['yearly'],
         formattedPrice: '$' + AMOUNTS['plus']['yearly'],
-        stripeId: process.env.NEXT_PUBLIC_PLUS_YEARLY_PRICE_ID!,
+        stripeId: process.env.NEXT_PUBLIC_STRIPE_PLUS_YEARLY_PRICE_ID || null,
       },
     },
     features: [
@@ -82,10 +87,12 @@ export const BILLING_PLANS = [
       'Basic analytics dashboard',
       'Email support',
     ],
-    cta: 'Subscribe Now',
+    cta: 'Start 14-day trial',
     popular: true,
+    trialDays: 14,
   },
   {
+    id: 'pro' as PlanType,
     name: 'Pro plan',
     description:
       'For teams and power users who need generous token limits and advanced tooling.',
@@ -93,12 +100,12 @@ export const BILLING_PLANS = [
       monthly: {
         amount: AMOUNTS['pro']['monthly'],
         formattedPrice: '$' + AMOUNTS['pro']['monthly'],
-        stripeId: process.env.NEXT_PUBLIC_PRO_MONTHLY_PRICE_ID!,
+        stripeId: process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID || null,
       },
       yearly: {
         amount: AMOUNTS['pro']['yearly'],
         formattedPrice: '$' + AMOUNTS['pro']['yearly'],
-        stripeId: process.env.NEXT_PUBLIC_PRO_YEARLY_PRICE_ID!,
+        stripeId: process.env.NEXT_PUBLIC_STRIPE_PRO_YEARLY_PRICE_ID || null,
       },
     },
     features: [
@@ -109,10 +116,12 @@ export const BILLING_PLANS = [
       'Team collaboration tools',
       'Exportable usage reports',
     ],
-    cta: 'Subscribe Now',
+    cta: 'Start 7-day trial',
     popular: false,
+    trialDays: 7,
   },
   {
+    id: 'enterprise' as PlanType,
     name: 'Enterprise',
     description:
       'Tailored for companies with high-volume needs and advanced security.',
@@ -137,5 +146,6 @@ export const BILLING_PLANS = [
     ],
     cta: 'Contact sales',
     popular: false,
+    trialDays: null,
   },
 ];
