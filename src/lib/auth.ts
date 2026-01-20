@@ -49,17 +49,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     authorized: async ({ auth }) => {
       return !!auth
     },
-    jwt: async ({ token, user }) => {
+    jwt: async ({ token, user, trigger, session: updateSession }) => {
       // On first sign in, add user id to token
       if (user) {
         token.id = user.id
+        token.name = user.name
+        token.email = user.email
+        token.picture = user.image
       }
+
+      // Handle session update from client (when user updates their profile)
+      if (trigger === "update" && updateSession) {
+        token.name = updateSession.name
+        token.email = updateSession.email
+      }
+
       return token
     },
     session: async ({ session, token }) => {
-      // Add user id to session from JWT token
-      if (session.user && token.id) {
+      // Add user data to session from JWT token
+      if (session.user) {
         session.user.id = token.id as string
+        session.user.name = (token.name as string) ?? undefined
+        session.user.email = (token.email as string) ?? undefined
+        session.user.image = (token.picture as string) ?? undefined
       }
       return session
     },
